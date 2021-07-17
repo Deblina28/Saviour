@@ -3,6 +3,11 @@
 #include <U8x8lib.h>
 
 U8X8_SSD1306_128X64_NONAME_SW_I2C u8x8(SCL, SDA, U8X8_PIN_NONE);   // OLEDs without Reset of the Display
+int fran = 233;
+
+int dit = 80;
+int dah = 200;
+
 
 char l = ' ';
 String sent = "";
@@ -14,6 +19,8 @@ static const String morse[] PROGMEM = {"-----", ".----", "..---", "...--", "....
 
 void setup() {
   pinMode(2, INPUT);
+  pinMode(5, OUTPUT);
+  pinMode(4, OUTPUT);
 
   u8x8.begin();
   u8x8.setFlipMode(0);
@@ -22,8 +29,6 @@ void setup() {
 
   Serial.begin(9600);
 
-
-  // Serial.println(morseTranslate(sent));
 
 
 }
@@ -35,18 +40,17 @@ void setup() {
 void loop()
 {
 
-  l = (char)(90 - map(analogRead(A0), 0, 1021, 0, 26));
-
-
-  if (l == 64)
-    l = ' ';
-
-
-  u8x8.setCursor(x, y);
-  click();
-
   if (!goMenu)
   {
+
+    l = (char)(90 - map(analogRead(A0), 0, 1021, 0, 26));
+
+    if (l == 64)
+      l = ' ';
+
+    u8x8.setCursor(x, y);
+    click();
+
     if (millis() - ps >= 500)
     {
       cursor = !cursor;
@@ -65,21 +69,9 @@ boolean click()
 {
   if (digitalRead(2))
   {
-    
+
     if (f)
-    {
-      sent += l;
-      x++;
-      f = false;
-      u8x8.print(l);
-      if (x == 16)
-      {
-        y++;
-        x = 0;
-        u8x8.setCursor(x, y);
-      }
-      Serial.println(sent);
-    }
+      Morse();
 
     if (millis() - out > 3000)
     {
@@ -87,7 +79,8 @@ boolean click()
       Serial.println(z);
       out = millis();
       printMorse(z);
-      goMenu=true;
+      spitMorse(z);
+      goMenu = true;
     }
   }
 
@@ -100,6 +93,20 @@ boolean click()
   return !f;
 }
 
+void Morse()
+{
+  sent += l;
+  x++;
+  f = false;
+  u8x8.print(l);
+  if (x == 16)
+  {
+    y++;
+    x = 0;
+    u8x8.setCursor(x, y);
+  }
+  Serial.println(sent);
+}
 
 String morseTranslate(String line)
 {
@@ -133,4 +140,48 @@ void printMorse(String line)
     y = i / 16;
   }
   sent = "";
+}
+
+
+void spitMorse(String s)
+{
+  for (int i = 0; i < s.length(); i++)
+  {
+
+    char x = s.charAt(i);
+
+    if (x == ' ')
+    {
+      digitalWrite(4, 0);
+      analogWrite(5, 0);
+      delay(200);
+    }
+
+    else if (x == '.')
+    {
+      analogWrite(5, fran);
+      digitalWrite(4, 1);
+      delay(dit);
+      analogWrite(5, 0);
+      digitalWrite(4, 0);
+    }
+
+    else if (x == '-')
+    {
+      analogWrite(5, fran);
+      digitalWrite(4, 1);
+      delay(dah);
+      analogWrite(5, 0);
+      digitalWrite(4, 0);
+    }
+
+    else
+    {
+      analogWrite(5, 0);
+      digitalWrite(4, 0);
+      delay(500);
+    }
+
+    delay(50);
+  }
 }
