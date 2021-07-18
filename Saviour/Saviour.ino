@@ -5,10 +5,10 @@
 #include <SoftwareSerial.h>
 
 #define led 7
+
 #define buzz 5
 
-U8X8_SSD1306_128X64_NONAME_SW_I2C u8x8(SCL, SDA, U8X8_PIN_NONE);   // OLEDs without Reset of the Display
-
+U8X8_SSD1306_128X64_NONAME_SW_I2C u8x8(SCL, SDA, U8X8_PIN_NONE);
 
 SoftwareSerial ss(4, 3);
 TinyGPSPlus gps;
@@ -18,7 +18,6 @@ int fran = 233;
 int dit = 80;
 int dah = 200;
 
-
 char l = ' ';
 String sent = "";
 int x = 0, y = 0, ch=0, lch=-1;
@@ -27,7 +26,7 @@ long ps = 0, out;
 
 static const String morse[] PROGMEM = {"-----", ".----", "..---", "...--", "....-", ".....", "-....", "--...", "---..", "----.", "---...", "---...", "-...-", "-...-", "-...-", "..--..", ".--.-.", ".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", "-.-", ".-..", "--", "-.", "---", ".--.", "--.-", ".-.", "...", "-", "..-", "...-", ".--", "-..-", "-.--", "--.."};
 
-String lati="",lngt="";
+String lati="0.00000",lngt="0.00000";
 
 
 void setup() {
@@ -53,7 +52,7 @@ void loop()
       if(ch==0)
         Morse();
         
-      else if(ch==2)
+      else if(ch==1)
       GPS();
      
   }
@@ -90,14 +89,14 @@ if(lch!=ch)
    u8x8.print("-.-.-.-");
   }
 
-  else if(ch==1)
+  else if(ch==2)
   {
    u8x8.clearDisplay();
    u8x8.setCursor(4,3);
    u8x8.print("Compass");
   }
 
-  else if(ch==2)
+  else if(ch==1)
   {
    u8x8.clearDisplay();
    u8x8.setCursor(4,3);
@@ -167,7 +166,9 @@ boolean Morse()
       {
         if(digitalRead(2))
         {
+          goMenu = true;
           delay(100);
+          lch=-1;
           return !f;  
         }          
       }
@@ -288,19 +289,20 @@ void GPS()
         Serial.println(millis()-cs);
         if(millis()-cs>3000)
         {
-          String li=morseTranslate(lati);
-          String lg=morseTranslate(lngt);
+          String li=morseTranslate(lati.substring(0,8));
+          String lg=morseTranslate(lngt.substring(0,8));
           printMorse(li);
           spitMorse(li);
           printMorse(lg);
           spitMorse(lg);
-
+          goMenu = true;
           while(true)
           {
             if(digitalRead(2))
             {
               goMenu=true;
               delay(100);
+              lch=-1;
               return;
             }
           }
@@ -319,7 +321,7 @@ void displayGpsData()
     lati = "lat:"+String(gps.location.lat(), 6);
     lngt = "lng:"+String(gps.location.lng(), 6);
 
-    u8x8.refreshDisplay();
+    //u8x8.refreshDisplay();
     
     u8x8.setCursor(0,1);
     u8x8.print(lati);
@@ -338,7 +340,7 @@ void displayGpsData()
     u8x8.setCursor(0,1);
     u8x8.print("NO FIX");
     
-    u8x8.refreshDisplay();
+    //u8x8.refreshDisplay();
   }
 
   Serial.println();
